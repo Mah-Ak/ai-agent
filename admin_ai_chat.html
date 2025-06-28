@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Admin AI - چت تعاملی</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            height: 100vh;
+            overflow: hidden;
+            color: #2d3748;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 380px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #4a5568;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="rgba(148,163,184,0.02)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+        
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #2d3748;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .sidebar-header p {
+            font-size: 0.95rem;
+            color: #718096;
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .questions-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 25px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .category {
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .category:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e0;
+        }
+        
+        .category-header {
+            padding: 18px 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(248, 250, 252, 0.8);
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .category-header:hover {
+            background: rgba(241, 245, 249, 0.9);
+        }
+        
+        .category-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .category-icon {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            border-radius: 8px;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+        }
+        
+        .category-toggle {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            color: #8b5cf6;
+        }
+        
+        .category.expanded .category-toggle {
+            transform: rotate(180deg);
+            background: rgba(139, 92, 246, 0.15);
+        }
+        
+        .category-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .category.expanded .category-content {
+            max-height: 600px;
+        }
+        
+        .question-item {
+            padding: 14px 22px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            border-bottom: 1px solid #f1f5f9;
+            position: relative;
+            color: #4a5568;
+        }
+        
+        .question-item:last-child {
+            border-bottom: none;
+        }
+        
+        .question-item:hover {
+            background: rgba(139, 92, 246, 0.05);
+            padding-right: 28px;
+            color: #2d3748;
+        }
+        
+        .question-item:active {
+            transform: scale(0.98);
+        }
+        
+        /* Gradient overlay for collapsed categories */
+        .category:not(.expanded) .category-content::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: linear-gradient(to bottom, transparent, rgba(248, 250, 252, 0.95));
+            pointer-events: none;
+        }
+        
+        /* Show first question always */
+        .category:not(.expanded) .question-item:first-child {
+            display: block;
+        }
+        
+        .category:not(.expanded) .question-item:not(:first-child) {
+            display: none;
+        }
+        
+        /* Collapsed state styling */
+        .category:not(.expanded) .question-item:first-child {
+            position: relative;
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 0 0 16px 16px;
+            border-bottom: none;
+        }
+        
+        .category:not(.expanded) .question-item:first-child::after {
+            content: '...';
+            position: absolute;
+            bottom: 12px;
+            right: 22px;
+            font-size: 1.3rem;
+            color: #8b5cf6;
+            font-weight: bold;
+        }
+        
+        /* Main Chat Area */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border-radius: 24px 0 0 24px;
+            margin: 15px 15px 15px 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 25px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #2d3748;
+        }
+        
+        .chat-title {
+            color: #2d3748;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .action-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            font-weight: 500;
+        }
+        
+        .action-btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: #8b5cf6;
+            color: #8b5cf6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 30px;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message-content {
+            max-width: 80%;
+            padding: 20px 24px;
+            border-radius: 20px;
+            position: relative;
+            line-height: 1.7;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            font-size: 0.95rem;
+        }
+        
+        .message.user .message-content {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+        
+        .message.ai .message-content {
+            background: white;
+            color: #2d3748;
+            border-bottom-left-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin: 0 18px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            color: white;
+        }
+        
+        .message.ai .message-avatar {
+            background: white;
+            color: #8b5cf6;
+            border: 2px solid #8b5cf6;
+        }
+        
+        /* Feedback Buttons */
+        .feedback-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+        
+        .feedback-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feedback-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+        
+        .feedback-btn.liked {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: #10b981;
+            color: white;
+        }
+        
+        .feedback-btn.disliked {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-color: #ef4444;
+            color: white;
+        }
+        
+        /* Chat Input */
+        .chat-input-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-top: 1px solid #e2e8f0;
+            backdrop-filter: blur(15px);
+        }
+        
+        .chat-input-wrapper {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .chat-input {
+            width: 100%;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 18px 70px 18px 24px;
+            color: #2d3748;
+            font-size: 1rem;
+            resize: none;
+            min-height: 56px;
+            max-height: 200px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            font-family: inherit;
+        }
+        
+        .chat-input:focus {
+            border-color: #8b5cf6;
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .chat-input::placeholder {
+            color: #a0aec0;
+            font-weight: 400;
+        }
+        
+        .send-button {
+            position: absolute;
+            left: 8px;
+            bottom: 8px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+            border: none;
+            border-radius: 14px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: white;
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+        
+        .send-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .send-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Loading Animation */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 18px 24px;
+            background: white;
+            border-radius: 20px;
+            border-bottom-left-radius: 8px;
+            margin-bottom: 30px;
+            max-width: 80%;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+        
+        .typing-dot {
+            width: 10px;
+            height: 10px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+                height: 100vh;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 0;
+                overflow: hidden;
+                transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border-left: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            
+            .sidebar.mobile-open {
+                height: 60vh;
+                min-height: 400px;
+            }
+            
+            .main-chat {
+                flex: 1;
+                margin: 0;
+                border-radius: 0;
+                min-height: 0;
+            }
+            
+            .chat-header {
+                padding: 20px;
+                position: relative;
+            }
+            
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                background: rgba(139, 92, 246, 0.1);
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                cursor: pointer;
+                margin-left: 10px;
+                transition: all 0.2s ease;
+            }
+            
+            .mobile-menu-btn:hover {
+                background: rgba(139, 92, 246, 0.15);
+            }
+            
+            .mobile-menu-btn .hamburger {
+                width: 20px;
+                height: 2px;
+                background: #8b5cf6;
+                position: relative;
+                transition: all 0.3s ease;
+            }
+            
+            .mobile-menu-btn .hamburger::before,
+            .mobile-menu-btn .hamburger::after {
+                content: '';
+                position: absolute;
+                width: 20px;
+                height: 2px;
+                background: #8b5cf6;
+                transition: all 0.3s ease;
+            }
+            
+            .mobile-menu-btn .hamburger::before {
+                top: -6px;
+            }
+            
+            .mobile-menu-btn .hamburger::after {
+                bottom: -6px;
+            }
+            
+            .mobile-menu-btn.active .hamburger {
+                background: transparent;
+            }
+            
+            .mobile-menu-btn.active .hamburger::before {
+                transform: rotate(45deg);
+                top: 0;
+            }
+            
+            .mobile-menu-btn.active .hamburger::after {
+                transform: rotate(-45deg);
+                bottom: 0;
+            }
+            
+            .chat-actions {
+                gap: 8px;
+            }
+            
+            .action-btn {
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .chat-messages {
+                padding: 20px;
+            }
+            
+            .message-content {
+                max-width: 95%;
+                padding: 16px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .message-avatar {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+                margin: 0 12px;
+            }
+            
+            .chat-input-container {
+                padding: 20px;
+            }
+            
+            .chat-input {
+                padding: 16px 60px 16px 20px;
+                min-height: 50px;
+                font-size: 0.95rem;
+            }
+            
+            .send-button {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+            
+            .category {
+                margin-bottom: 20px;
+            }
+            
+            .category-header {
+                padding: 16px 20px;
+            }
+            
+            .category-title {
+                font-size: 1rem;
+            }
+            
+            .category-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+            }
+            
+            .question-item {
+                padding: 12px 20px;
+                font-size: 0.85rem;
+            }
+            
+            .questions-section {
+                padding: 20px;
+            }
+            
+            .sidebar-header {
+                padding: 20px;
+            }
+            
+            .sidebar-header h2 {
+                font-size: 1.3rem;
+            }
+            
+            .sidebar-header p {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .chat-header {
+                padding: 15px;
+            }
+            
+            .chat-title {
+                font-size: 1.1rem;
+            }
+            
+            .chat-messages {
+                padding: 15px;
+            }
+            
+            .message-content {
+                max-width: 98%;
+                padding: 14px 18px;
+                font-size: 0.85rem;
+            }
+            
+            .message-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+                margin: 0 10px;
+            }
+            
+            .chat-input-container {
+                padding: 15px;
+            }
+            
+            .chat-input {
+                padding: 14px 55px 14px 18px;
+                min-height: 45px;
+                font-size: 0.9rem;
+            }
+            
+            .send-button {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            
+            .action-btn {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+            
+            .category-header {
+                padding: 14px 18px;
+            }
+            
+            .question-item {
+                padding: 10px 18px;
+                font-size: 0.8rem;
+            }
+            
+            .questions-section {
+                padding: 15px;
+            }
+            
+            .sidebar-header {
+                padding: 15px;
+            }
+        }
+        
+        /* Hide mobile menu button on desktop */
+        .mobile-menu-btn {
+            display: none;
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(248, 250, 252, 0.5);
+            border-radius: 6px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.2);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(248, 250, 252, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.4);
+        }
+        
+        /* Toast Animations */
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* Modern Feedback Buttons */
+        .feedback-buttons-modern {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+            justify-content: flex-start;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .feedback-btn-modern {
+            background: #f3f0ff;
+            border: 1.5px solid #d6bcfa;
+            color: #7c3aed;
+            padding: 7px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .feedback-btn-modern:hover {
+            background: #ede9fe;
+            border-color: #a78bfa;
+            color: #5b21b6;
+        }
+        .feedback-thank {
+            color: #059669;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 8px;
+            display: inline-block;
+        }
+        .feedback-reasons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: flex-start;
+        }
+        .feedback-reasons-title {
+            font-size: 0.97rem;
+            color: #7c3aed;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .feedback-reason-btn {
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            color: #4a5568;
+            padding: 7px 16px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.93rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            outline: none;
+        }
+        .feedback-reason-btn:hover {
+            background: #f3f0ff;
+            border-color: #a78bfa;
+            color: #7c3aed;
+        }
+        .question-item-preview {
+            opacity: 0.5;
+            pointer-events: none;
+            direction: rtl;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 90%;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 Admin AI</h2>
+                <p>سوالات پیشنهادی</p>
+            </div>
+            <div class="questions-section" id="questionsSection">
+                <!-- سوالات اینجا لود می‌شوند -->
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="main-chat">
+            <div class="chat-header">
+                <div class="chat-title">چت تعاملی Admin AI</div>
+                <div class="chat-actions">
+                    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" id="mobileMenuBtn">
+                        <div class="hamburger"></div>
+                    </button>
+                    <button class="action-btn" onclick="clearChat()">پاک کردن چت</button>
+                    <button class="action-btn" onclick="exportChat()">خروجی</button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        سلام دوست عزیز! من یه دستیار هوشمندم که اینجام تا توی تحلیل داده‌ها کنارت باشم.  
+                        <br><br>
+                        سوالی درباره فروش، مشتری یا محصولات داری؟ فقط بنویس 😊
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea 
+                        id="chatInput" 
+                        class="chat-input" 
+                        placeholder="پیام خود را بنویسید..."
+                        rows="1"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <button class="send-button" onclick="sendMessage()" id="sendButton">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // داده‌های سوالات پیشنهادی
+        const questionsData = [
+            {
+                category: "تحلیل فروش",
+                questions: [
+                    "کارمزد و فروش ده روز گذشته چقدر بوده و چند درصد فروش کارمزد بوده؟",
+                    "در کدام زیر دسته سطح سوم بیشترین رشد فروش را در ۹ ماه گذشته داشته‌ایم؟",
+                    "مقایسه فروش ماه جاری با ماه قبل چگونه است؟",
+                    "پرفروش‌ترین محصولات در ماه گذشته کدام بوده‌اند؟",
+                    "روند فروش روزانه در ماه جاری چگونه است؟"
+                ]
+            },
+            {
+                category: "تحلیل مشتریان",
+                questions: [
+                    "درصد مشتریان بازگشتی (ریترن) در هر ماه چقدر بوده است؟",
+                    "تعداد مشتریان جدید و بازگشتی در هر ماه چقدر بوده است؟",
+                    "میانگین خرید هر مشتری در ماه چقدر است؟",
+                    "وفادارترین مشتریان ما چه کسانی هستند؟",
+                    "توزیع جغرافیایی مشتریان ما چگونه است؟"
+                ]
+            },
+            {
+                category: "مدیریت محصولات",
+                questions: [
+                    "کدام محصولات پربازدید در حال حاضر ناموجود هستند؟",
+                    "محصولات با موجودی کم کدام هستند؟",
+                    "کدام محصولات بیشترین حاشیه سود را دارند؟",
+                    "محصولات با بیشترین نرخ خرید مجدد کاربر کدام هستند؟",
+                    "کدام محصولات نیاز به بروزرسانی قیمت دارند؟"
+                ]
+            },
+            {
+                category: "کیفیت خدمات",
+                questions: [
+                    "نرخ کنسلی ماهیانه سفارش‌ها در ده ماه گذشته چقدر بوده است؟",
+                    "میانگین زمان ارسال سفارش‌های من چقدر بوده است؟",
+                    "نرخ رضایت مشتریان در ماه‌های اخیر چگونه بوده است؟",
+                    "بیشترین دلایل مرجوعی محصولات چه بوده است؟",
+                    "وضعیت پاسخگویی به پیام‌های مشتریان چگونه است؟"
+                ]
+            }
+        ];
+
+        let chatHistory = [];
+        let isTyping = false;
+        let feedbackHistory = [];
+
+        // لود کردن سوالات پیشنهادی
+        function loadQuestions() {
+            const section = document.getElementById('questionsSection');
+            section.innerHTML = '';
+
+            const categoryIcons = {
+                'تحلیل فروش': '📊',
+                'تحلیل مشتریان': '👥',
+                'مدیریت محصولات': '📦',
+                'کیفیت خدمات': '⭐'
+            };
+
+            questionsData.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+                const icon = categoryIcons[category.category] || '❓';
+                let questionsHtml = '';
+                category.questions.forEach(question => {
+                    questionsHtml += `<div class=\"question-item\" onclick=\"sendQuestion('${question.replace(/'/g, "\\'")}')\" style=\"display:none;\">${question}</div>`;
+                });
+                categoryDiv.innerHTML = `
+                    <div class=\"category-header\" onclick=\"toggleCategory(this)\">
+                        <div class=\"category-title\">
+                            <div class=\"category-icon\">${icon}</div>
+                            ${category.category}
+                        </div>
+                        <div class=\"category-toggle\">▼</div>
+                    </div>
+                    <div class=\"category-content\">
+                        ${questionsHtml}
+                    </div>
+                `;
+                section.appendChild(categoryDiv);
+            });
+        }
+
+        // تغییر وضعیت دسته‌بندی
+        function toggleCategory(header) {
+            const category = header.parentElement;
+            const isExpanded = category.classList.contains('expanded');
+            // بستن همه دسته‌بندی‌ها
+            document.querySelectorAll('.category').forEach(cat => cat.classList.remove('expanded'));
+            // باز کردن دسته‌بندی کلیک شده اگر بسته بود
+            if (!isExpanded) {
+                category.classList.add('expanded');
+                // نمایش همه سوالات
+                const items = category.querySelectorAll('.question-item');
+                items.forEach(item => {
+                    item.style.display = '';
+                });
+            } else {
+                // بستن: مخفی کردن همه سوالات
+                const items = category.querySelectorAll('.question-item');
+                items.forEach(item => {
+                    item.style.display = 'none';
+                });
+            }
+        }
+
+        // ارسال سوال
+        function sendQuestion(question) {
+            addMessage(question, 'user');
+            processQuestion(question);
+        }
+
+        // اضافه کردن پیام
+        function addMessage(content, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = sender === 'user' ? '👤' : '🤖';
+            
+            if (sender === 'ai') {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">${avatar}</div>
+                    <div class="message-content">
+                        ${content}
+                        <div class="feedback-buttons-modern">
+                            <button class="feedback-btn-modern" onclick="showFeedbackOptions(this, true)">👍 بله، مفید بود</button>
+                            <button class="feedback-btn-modern" onclick="showFeedbackOptions(this, false)">👎 نه، نیاز به بهبود داره</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                messageDiv.innerHTML = `
+                    <div class="message-avatar">${avatar}</div>
+                    <div class="message-content">${content}</div>
+                `;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            chatHistory.push({ sender, content, timestamp: new Date() });
+        }
+
+        // نمایش گزینه‌های فیدبک
+        window.showFeedbackOptions = function(btn, liked) {
+            const feedbackDiv = btn.parentElement;
+            const messageContent = btn.closest('.message-content').textContent;
+            const messageElement = btn.closest('.message');
+            const messageIndex = Array.from(messageElement.parentElement.children).indexOf(messageElement);
+            const prompt = getLastUserPrompt(messageIndex);
+            const response = messageContent;
+
+            if (liked) {
+                saveStructuredFeedback({ prompt, response, liked: true, reason_category: null });
+                feedbackDiv.innerHTML = '<span class="feedback-thank">ممنون از بازخوردت! 😊</span>';
+            } else {
+                // نمایش لیست دلایل
+                feedbackDiv.innerHTML = `
+                    <div class="feedback-reasons">
+                        <div class="feedback-reasons-title">چرا این پاسخ برات مفید نبود؟</div>
+                        <button class="feedback-reason-btn" onclick="submitReason(this, 'پاسخ ناقص بود')">پاسخ ناقص بود</button>
+                        <button class="feedback-reason-btn" onclick="submitReason(this, 'متوجه منظورم نشد')">متوجه منظورم نشد</button>
+                        <button class="feedback-reason-btn" onclick="submitReason(this, 'اطلاعات اشتباه بود')">اطلاعات اشتباه بود</button>
+                        <button class="feedback-reason-btn" onclick="submitReason(this, 'خیلی پیچیده یا طولانی بود')">خیلی پیچیده یا طولانی بود</button>
+                        <button class="feedback-reason-btn" onclick="submitReason(this, 'دلیل دیگری دارم')">دلیل دیگری دارم</button>
+                    </div>
+                `;
+            }
+        }
+
+        // ثبت دلیل دیسلایک
+        window.submitReason = function(btn, reason) {
+            console.log('submitReason called with reason:', reason);
+            const feedbackDiv = btn.closest('.feedback-buttons-modern');
+            const messageContent = btn.closest('.message-content').textContent;
+            const messageElement = btn.closest('.message');
+            const messageIndex = Array.from(messageElement.parentElement.children).indexOf(messageElement);
+            const prompt = getLastUserPrompt(messageIndex);
+            const response = messageContent;
+            
+            console.log('Feedback data:', { prompt, response, liked: false, reason_category: reason });
+            
+            saveStructuredFeedback({ prompt, response, liked: false, reason_category: reason });
+            feedbackDiv.innerHTML = '<span class="feedback-thank">بازخوردت ثبت شد، ممنون! 🙏</span>';
+        }
+
+        // گرفتن آخرین پرامپت کاربر قبل از این پیام AI
+        function getLastUserPrompt(aiMsgIndex) {
+            for (let i = aiMsgIndex - 1; i >= 0; i--) {
+                if (chatHistory[i] && chatHistory[i].sender === 'user') {
+                    return chatHistory[i].content;
+                }
+            }
+            return '';
+        }
+
+        // ذخیره فیدبک ساختاریافته
+        function saveStructuredFeedback(feedback) {
+            const structured = {
+                ...feedback,
+                timestamp: new Date().toISOString(),
+                sessionId: getSessionId(),
+                userAgent: navigator.userAgent
+            };
+            let all = JSON.parse(localStorage.getItem('adminAI_structured_feedback') || '[]');
+            all.push(structured);
+            localStorage.setItem('adminAI_structured_feedback', JSON.stringify(all));
+            console.log('فیدبک ذخیره شد:', structured);
+            // ارسال به سرور (اختیاری)
+            submitFeedbackToServer(structured);
+        }
+
+        // تولید Session ID
+        function getSessionId() {
+            let sessionId = localStorage.getItem('adminAI_session_id');
+            if (!sessionId) {
+                sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('adminAI_session_id', sessionId);
+            }
+            return sessionId;
+        }
+
+        // پردازش سوال
+        function processQuestion(question) {
+            isTyping = true;
+            showTypingIndicator();
+            
+            setTimeout(() => {
+                const response = generateResponse(question);
+                hideTypingIndicator();
+                addMessage(response, 'ai');
+                isTyping = false;
+            }, 1500 + Math.random() * 1000);
+        }
+
+        // نمایش نشانگر تایپ
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message ai';
+            typingDiv.id = 'typingIndicator';
+            
+            typingDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // مخفی کردن نشانگر تایپ
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // پاسخ‌های آماده با کلیدواژه‌های متنوع و منطق AND
+        const responses = [
+          {
+            keywords: ['کارمزد', 'فروش', 'پرداخت', 'مبلغ کارمزد', 'کارمزد پرداختی', 'چقدر کارمزد', 'درصد فروش کارمزد', 'کارمزد ده روز'],
+            answer: `📊 **گزارش کارمزد و فروش ده روز گذشته:**\n\n💰 **کل فروش:** 1,250,000,000 تومان  \n💸 **کارمزد:** 125,000,000 تومان (10%)  \n📈 **درصد کارمزد از کل فروش:** 10%\n\n📅 **تفکیک روزانه:**\n• روز 1: 120M فروش، 12M کارمزد  \n• روز 2: 115M فروش، 11.5M کارمزد  \n• روز 3: 130M فروش، 13M کارمزد  \n• روز 4: 125M فروش، 12.5M کارمزد  \n• روز 5: 140M فروش، 14M کارمزد\n\n🎯 **تحلیل:** کارمزد در محدوده استاندارد 8-12% قرار دارد و روند پایدار است.`
+          },
+          {
+            keywords: ['مقایسه', 'فروش', 'رشد', 'ماه جاری', 'ماه قبل', 'مقایسه فروش', 'رشد فروش'],
+            answer: `📈 **مقایسه فروش ماه جاری با ماه قبل:**\n\n📊 **ماه جاری:** 3,450,000,000 تومان  \n📊 **ماه قبل:** 2,980,000,000 تومان  \n📈 **رشد:** +15.8% (470M تومان)\n\n🏆 **دسته‌بندی‌های برتر:**\n1. **الکترونیک:** +25% رشد  \n2. **پوشاک:** +12% رشد  \n3. **کتاب:** +8% رشد  \n4. **لوازم خانگی:** +18% رشد\n\n📅 **روند هفتگی:**\n• هفته 1: 850M  \n• هفته 2: 920M  \n• هفته 3: 880M  \n• هفته 4: 800M (پیش‌بینی)\n\n🎯 **نتیجه:** رشد مثبت و پایدار در تمام دسته‌ها مشاهده می‌شود.`
+          },
+          {
+            keywords: ['پرفروش', 'محصولات', 'پرفروش‌ترین', 'پرفروش ترین', 'محصولات پرفروش', 'پرفروش ماه'],
+            answer: `🏆 **پرفروش‌ترین محصولات ماه گذشته:**\n\n1. **📱 iPhone 15 Pro** - 156 فروش - 5.4M تومان  \n2. **💻 Dell XPS 13** - 89 فروش - 4.0M تومان  \n3. **📱 Samsung Galaxy S24** - 134 فروش - 3.8M تومان  \n4. **🎧 AirPods Pro** - 245 فروش - 2.9M تومان  \n5. **⌚ Apple Watch** - 98 فروش - 1.2M تومان\n\n📊 **آمار کلی:**\n• کل فروش: 17.3M تومان  \n• میانگین قیمت: 346,000 تومان  \n• تعداد کل فروش: 722 عدد\n\n📈 **روند:** رشد 15% نسبت به ماه قبل در تمام محصولات برتر`
+          },
+          {
+            keywords: ['محصولات', 'ناموجود', 'پربازدید', 'محصولات ناموجود', 'محصولات پربازدید ناموجود', 'ناموجود پربازدید'],
+            answer: `⚠️ **محصولات پربازدید ناموجود:**\n\n1. **📱 iPhone 15 Pro Max (256GB)** - 89 بازدید/روز  \n2. **💻 MacBook Air M2** - 67 بازدید/روز  \n3. **🎧 Sony WH-1000XM5** - 45 بازدید/روز  \n4. **📱 Samsung Galaxy S24 Ultra** - 34 بازدید/روز  \n5. **⌚ Apple Watch Series 9** - 28 بازدید/روز\n\n📊 **آمار:**\n• کل محصولات ناموجود: 23 عدد  \n• میانگین بازدید روزانه: 52.6  \n• تخمین فروش از دست رفته: 2.1M تومان/روز\n\n🎯 **توصیه:** افزایش موجودی این محصولات در اولویت است.`
+          },
+          {
+            keywords: ['نرخ رضایت', 'رضایت', 'میزان رضایت', 'رضایت مشتریان', 'رضایت کاربران', 'رضایت مشتری'],
+            answer: `⭐ **نرخ رضایت مشتریان ماه‌های اخیر:**\n\n📊 **آمار کلی:**\n• میانگین رضایت: 4.2/5 (84%)  \n• تعداد نظرات: 1,247  \n• رضایت مثبت: 1,047 (84%)  \n• رضایت منفی: 200 (16%)\n\n📅 **روند ماهانه:**\n• فروردین: 4.1/5  \n• اردیبهشت: 4.2/5  \n• خرداد: 4.3/5  \n• تیر: 4.2/5\n\n🏆 **عوامل رضایت:**\n1. **کیفیت محصولات:** 4.4/5  \n2. **سرعت ارسال:** 4.1/5  \n3. **پشتیبانی:** 4.0/5  \n4. **قیمت:** 3.9/5\n\n🎯 **بهبود:** تمرکز بر بهبود قیمت‌گذاری و پشتیبانی`
+          }
+        ];
+
+        function generateResponse(question) {
+          const lowerQuestion = question.toLowerCase();
+          const wordCount = lowerQuestion.split(/\s+/).length;
+          for (const item of responses) {
+            const matchCount = item.keywords.filter(key => lowerQuestion.includes(key.toLowerCase())).length;
+            if ((wordCount <= 5 && matchCount >= 1) || (wordCount > 5 && matchCount >= 2) || (item.keywords.length === 1 && matchCount === 1)) {
+              return item.answer;
+            }
+          }
+          // پیام fallback کوتاه و مرتبط با غرفه
+          return `🤖 من به این اطلاعات دسترسی ندارم. لطفاً سوال مرتبط با فروش، مشتری یا محصولات غرفه بپرس.`;
+        }
+
+        // تشخیص دسته‌بندی سوال
+        function getQuestionCategory(question) {
+            const lowerQuestion = question.toLowerCase();
+            
+            if (lowerQuestion.includes('فروش') || lowerQuestion.includes('کارمزد') || lowerQuestion.includes('درآمد')) {
+                return 'تحلیل فروش';
+            } else if (lowerQuestion.includes('مشتری') || lowerQuestion.includes('ریترن') || lowerQuestion.includes('وفادار')) {
+                return 'تحلیل مشتریان';
+            } else if (lowerQuestion.includes('محصول') || lowerQuestion.includes('موجودی') || lowerQuestion.includes('کاتالوگ')) {
+                return 'مدیریت محصولات';
+            } else if (lowerQuestion.includes('رضایت') || lowerQuestion.includes('کیفیت') || lowerQuestion.includes('ارسال')) {
+                return 'کیفیت خدمات';
+            } else {
+                return 'عمومی';
+            }
+        }
+
+        // ارسال پیام
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message && !isTyping) {
+                addMessage(message, 'user');
+                processQuestion(message);
+                input.value = '';
+                autoResize(input);
+            }
+        }
+
+        // کلید Enter
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // تنظیم اندازه textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+
+        // پاک کردن چت
+        function clearChat() {
+            if (confirm('آیا مطمئن هستید که می‌خواهید چت را پاک کنید؟')) {
+                document.getElementById('chatMessages').innerHTML = `
+                    <div class="message ai">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            سلام دوست عزیز! من یه دستیار هوشمندم که اینجام تا توی تحلیل داده‌ها کنارت باشم.  
+                            <br><br>
+                            سوالی درباره فروش، مشتری یا محصولات داری؟ فقط بنویس 😊
+                        </div>
+                    </div>
+                `;
+                chatHistory = [];
+            }
+        }
+
+        // خروجی چت
+        function exportChat() {
+            const chatText = chatHistory.map(msg => 
+                `${msg.sender === 'user' ? 'شما' : 'AI'}: ${msg.content}`
+            ).join('\n\n');
+            
+            const blob = new Blob([chatText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `admin-ai-chat-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // لود کردن فیدبک‌های ذخیره شده
+        function loadFeedbackHistory() {
+            const saved = localStorage.getItem('adminAI_feedback');
+            if (saved) {
+                feedbackHistory = JSON.parse(saved);
+            }
+        }
+
+        // ذخیره فیدبک‌ها
+        function saveFeedbackHistory() {
+            localStorage.setItem('adminAI_feedback', JSON.stringify(feedbackHistory));
+        }
+
+        // ارسال فیدبک به سرور
+        async function submitFeedbackToServer(feedback) {
+            try {
+                const response = await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(feedback)
+                });
+                
+                if (response.ok) {
+                    console.log('فیدبک با موفقیت به سرور ارسال شد');
+                    return true;
+                } else {
+                    console.error('خطا در ارسال فیدبک به سرور');
+                    return false;
+                }
+            } catch (error) {
+                console.error('خطا در ارتباط با سرور:', error);
+                return false;
+            }
+        }
+
+        // راه‌اندازی اولیه
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQuestions();
+            loadFeedbackHistory();
+            setupMobileGestures();
+        });
+
+        // کنترل منوی موبایل
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            
+            sidebar.classList.toggle('mobile-open');
+            menuBtn.classList.toggle('active');
+            
+            // بستن منو با کلیک خارج از آن
+            if (sidebar.classList.contains('mobile-open')) {
+                setTimeout(() => {
+                    document.addEventListener('click', closeMobileMenuOnOutsideClick);
+                }, 100);
+            } else {
+                document.removeEventListener('click', closeMobileMenuOnOutsideClick);
+            }
+        }
+
+        // بستن منو با کلیک خارج از آن
+        function closeMobileMenuOnOutsideClick(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const menuBtn = document.getElementById('mobileMenuBtn');
+            
+            if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                sidebar.classList.remove('mobile-open');
+                menuBtn.classList.remove('active');
+                document.removeEventListener('click', closeMobileMenuOnOutsideClick);
+            }
+        }
+
+        // تنظیم ژست‌های لمسی برای موبایل
+        function setupMobileGestures() {
+            let startY = 0;
+            let currentY = 0;
+            let isDragging = false;
+            
+            const sidebar = document.querySelector('.sidebar');
+            
+            // تشخیص شروع لمس
+            sidebar.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+                isDragging = true;
+            });
+            
+            // تشخیص حرکت لمس
+            sidebar.addEventListener('touchmove', function(e) {
+                if (!isDragging) return;
+                
+                currentY = e.touches[0].clientY;
+                const diff = startY - currentY;
+                
+                // اگر به سمت بالا کشیده شد، منو را ببند
+                if (diff > 50) {
+                    toggleMobileMenu();
+                    isDragging = false;
+                }
+            });
+            
+            // تشخیص پایان لمس
+            sidebar.addEventListener('touchend', function() {
+                isDragging = false;
+            });
+        }
+
+        // بهبود عملکرد در موبایل
+        function optimizeForMobile() {
+            // تنظیم viewport برای موبایل
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+            
+            // جلوگیری از zoom در input
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.addEventListener('focus', function() {
+                    setTimeout(() => {
+                        this.style.fontSize = '16px'; // جلوگیری از zoom در iOS
+                    }, 100);
+                });
+            }
+        }
+
+        // فراخوانی بهینه‌سازی موبایل
+        if (window.innerWidth <= 768) {
+            optimizeForMobile();
+        }
+    </script>
+</body>
+</html> 
